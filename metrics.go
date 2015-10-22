@@ -11,3 +11,4 @@ package metrics
 // This global kill-switch helps quantify the observer effect and makes
 // for less cluttered pprof profiles.
 var UseNilMetrics bool = false
+var UseNilHists bool = false

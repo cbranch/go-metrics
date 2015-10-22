@@ -37,7 +37,7 @@ func GetOrRegisterTimer(name string, r Registry) Timer {
 
 // NewCustomTimer constructs a new StandardTimer from a Histogram and a Meter.
 func NewCustomTimer(h Histogram, m Meter) Timer {
-	if UseNilMetrics {
+	if UseNilHists {
 		return NilTimer{}
 	}
 	return &StandardTimer{
@@ -59,7 +59,7 @@ func NewRegisteredTimer(name string, r Registry) Timer {
 // NewTimer constructs a new StandardTimer using an exponentially-decaying
 // sample with the same reservoir size and alpha as UNIX load averages.
 func NewTimer() Timer {
-	if UseNilMetrics {
+	if UseNilHists {
 		return NilTimer{}
 	}
 	return &StandardTimer{
