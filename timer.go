@@ -74,7 +74,7 @@ func NewHdrTimer(minValue, maxValue int64, sigfigs int) Timer {
 	if UseNilHists {
 		return NilTimer{}
 	}
-	return &StandardTimer{
+	return &HdrTimer{
 		histogram: NewHdrHistogram(minValue, maxValue, sigfigs),
 		meter:     NewMeter(),
 	}
@@ -321,3 +321,103 @@ func (*TimerSnapshot) UpdateSince(time.Time) {
 // Variance returns the variance of the values at the time the snapshot was
 // taken.
 func (t *TimerSnapshot) Variance() float64 { return t.histogram.Variance() }
+
+// HdrTimer is the standard implementation of a Timer and uses a Histogram
+// and Meter.
+type HdrTimer struct {
+	histogram Histogram
+	meter     Meter
+}
+
+// Count returns the number of events recorded.
+func (t *HdrTimer) Count() int64 {
+	return t.histogram.Count()
+}
+
+// Max returns the maximum value in the sample.
+func (t *HdrTimer) Max() int64 {
+	return t.histogram.Max()
+}
+
+// Mean returns the mean of the values in the sample.
+func (t *HdrTimer) Mean() float64 {
+	return t.histogram.Mean()
+}
+
+// Min returns the minimum value in the sample.
+func (t *HdrTimer) Min() int64 {
+	return t.histogram.Min()
+}
+
+// Percentile returns an arbitrary percentile of the values in the sample.
+func (t *HdrTimer) Percentile(p float64) float64 {
+	return t.histogram.Percentile(p)
+}
+
+// Percentiles returns a slice of arbitrary percentiles of the values in the
+// sample.
+func (t *HdrTimer) Percentiles(ps []float64) []float64 {
+	return t.histogram.Percentiles(ps)
+}
+
+// Rate1 returns the one-minute moving average rate of events per second.
+func (t *HdrTimer) Rate1() float64 {
+	return t.meter.Rate1()
+}
+
+// Rate5 returns the five-minute moving average rate of events per second.
+func (t *HdrTimer) Rate5() float64 {
+	return t.meter.Rate5()
+}
+
+// Rate15 returns the fifteen-minute moving average rate of events per second.
+func (t *HdrTimer) Rate15() float64 {
+	return t.meter.Rate15()
+}
+
+// RateMean returns the meter's mean rate of events per second.
+func (t *HdrTimer) RateMean() float64 {
+	return t.meter.RateMean()
+}
+
+// Snapshot returns a read-only copy of the timer.
+func (t *HdrTimer) Snapshot() Timer {
+	return &TimerSnapshot{
+		histogram: t.histogram.Snapshot().(*HistogramSnapshot),
+		meter:     t.meter.Snapshot().(*MeterSnapshot),
+	}
+}
+
+// StdDev returns the standard deviation of the values in the sample.
+func (t *HdrTimer) StdDev() float64 {
+	return t.histogram.StdDev()
+}
+
+// Sum returns the sum in the sample.
+func (t *HdrTimer) Sum() int64 {
+	return t.histogram.Sum()
+}
+
+// Record the duration of the execution of the given function.
+func (t *HdrTimer) Time(f func()) {
+	ts := time.Now()
+	f()
+	t.Update(time.Since(ts))
+}
+
+// Record the duration of an event.
+func (t *HdrTimer) Update(d time.Duration) {
+	t.histogram.Update(int64(d))
+	t.meter.Mark(1)
+}
+
+// Record the duration of an event that started at a time and ends now.
+func (t *HdrTimer) UpdateSince(ts time.Time) {
+	t.histogram.Update(int64(time.Since(ts)))
+	t.meter.Mark(1)
+}
+
+// Variance returns the variance of the values in the sample.
+func (t *HdrTimer) Variance() float64 {
+	return t.histogram.Variance()
+}
