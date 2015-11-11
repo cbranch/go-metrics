@@ -68,6 +68,18 @@ func NewTimer() Timer {
 	}
 }
 
+// NewTimer constructs a new StandardTimer using an exponentially-decaying
+// sample with the same reservoir size and alpha as UNIX load averages.
+func NewHdrTimer(minValue, maxValue int64, sigfigs int) Timer {
+	if UseNilHists {
+		return NilTimer{}
+	}
+	return &StandardTimer{
+		histogram: NewHdrHistogram(minValue, maxValue, sigfigs),
+		meter:     NewMeter(),
+	}
+}
+
 // NilTimer is a no-op Timer.
 type NilTimer struct {
 	h Histogram
